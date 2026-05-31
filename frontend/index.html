@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Management Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#172033',
+              950: '#0b1120',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-slate-950 font-sans text-slate-100 antialiased">
+  <div class="pointer-events-none fixed inset-0 overflow-hidden">
+    <div class="absolute -left-32 top-0 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl"></div>
+    <div class="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-600/10 blur-3xl"></div>
+  </div>
+
+  <div class="relative mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+    <header class="mb-8 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 backdrop-blur-md">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm font-medium uppercase tracking-wider text-indigo-300">Task Engine</p>
+          <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Task Management Engine Dashboard
+          </h1>
+        </div>
+        <div id="connection-status" class="inline-flex items-center gap-2 self-start rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+          Connected
+        </div>
+      </div>
+    </header>
+
+    <div id="error-banner" class="mb-6 hidden rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200" role="alert"></div>
+
+    <div class="flex flex-1 flex-col gap-6 lg:flex-row">
+      <aside class="w-full shrink-0 lg:w-80 xl:w-96">
+        <section class="sticky top-6 rounded-2xl border border-white/10 bg-slate-850/80 p-6 shadow-xl backdrop-blur-md">
+          <h2 class="mb-1 text-lg font-semibold text-white">Create New Task</h2>
+          <p class="mb-5 text-sm text-slate-400">Add a task to your workflow.</p>
+
+          <form id="task-form" class="space-y-4" novalidate>
+            <div>
+              <label for="title" class="mb-1.5 block text-sm font-medium text-slate-300">Title</label>
+              <input
+                id="title"
+                name="title"
+                type="text"
+                required
+                placeholder="Enter task title"
+                class="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20"
+              />
+              <p id="title-error" class="mt-1 hidden text-xs text-red-400">Title is required.</p>
+            </div>
+
+            <div>
+              <label for="description" class="mb-1.5 block text-sm font-medium text-slate-300">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                rows="4"
+                placeholder="Optional details..."
+                class="w-full resize-none rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span id="submit-label">Create Task</span>
+              <svg id="submit-spinner" class="hidden h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </button>
+          </form>
+        </section>
+      </aside>
+
+      <main class="min-w-0 flex-1">
+        <section class="rounded-2xl border border-white/10 bg-slate-850/80 shadow-xl backdrop-blur-md">
+          <div class="flex flex-col gap-4 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-white">Your Tasks</h2>
+              <p class="text-sm text-slate-400">Browse, filter, and paginate tasks from the API.</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <label for="status-filter" class="text-sm text-slate-400">Filter</label>
+              <select
+                id="status-filter"
+                class="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20"
+              >
+                <option value="">All</option>
+                <option value="pending">pending</option>
+                <option value="completed">completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="task-list" class="space-y-3 p-6">
+            <div id="loading-state" class="flex items-center justify-center py-16 text-slate-400">
+              <svg class="mr-3 h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              Loading tasks...
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center justify-between gap-4 border-t border-white/10 px-6 py-4 sm:flex-row">
+            <p id="page-indicator" class="text-sm font-medium text-slate-300">Page 1</p>
+            <div class="flex items-center gap-2">
+              <button
+                id="prev-btn"
+                type="button"
+                disabled
+                class="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                id="next-btn"
+                type="button"
+                disabled
+                class="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
